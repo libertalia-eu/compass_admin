@@ -7,4 +7,8 @@ Frappe app for COMPASS: the admin interface on top of Keycloak. Each signed-in p
 
 Needs `compass_sso` (Social Login Key `keycloak`, `compass_sso.keycloak`). Decision record: COMPASS `xaden/decisions/2026-11-14-admin-oberflaeche-auf-keycloak.md`.
 
-Tests: `./run-tests.sh`. Licence: AGPL-3.0.
+Tests: `./run-tests.sh`.
+
+## Licence
+
+AGPL-3.0-or-later, see [LICENSE](LICENSE). If you change the app and let others use it over a network, you must offer them the source of your version. Contributions are welcome under the DCO, see [CONTRIBUTING.md](CONTRIBUTING.md).
