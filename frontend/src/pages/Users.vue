@@ -30,8 +30,8 @@
     </table>
   </div>
 
-  <Dialog v-model="creating" :options="{ title: __('New user') }">
-    <template #body-content>
+  <Dialog v-model:open="creating" :title="__('New user')">
+    <template #default>
       <form class="flex flex-col gap-3" @submit.prevent="create">
         <FormControl v-model="form.username" :label="__('Username')" required />
         <FormControl v-model="form.email" :label="__('Email')" type="email" required />
@@ -44,8 +44,8 @@
     </template>
   </Dialog>
 
-  <Dialog v-model="passwordOpen" :options="{ title: __('Set password') }">
-    <template #body-content>
+  <Dialog v-model:open="passwordOpen" :title="__('Set password')">
+    <template #default>
       <form class="flex flex-col gap-3" @submit.prevent="setPassword">
         <FormControl v-model="newPassword" :label="__('New password')" type="password" autocomplete="new-password" required />
         <Button type="submit" variant="solid" :label="__('Set password')" />
@@ -53,8 +53,8 @@
     </template>
   </Dialog>
 
-  <Dialog v-model="deleteOpen" :options="{ title: __('Delete user') }">
-    <template #body-content>
+  <Dialog v-model:open="deleteOpen" :title="__('Delete user')">
+    <template #default>
       <p class="text-p-base">{{ __('Delete {0} for good?').replace('{0}', deleting?.username) }}</p>
       <Button class="mt-3" variant="solid" theme="red" :label="__('Delete')" @click="remove" />
     </template>
