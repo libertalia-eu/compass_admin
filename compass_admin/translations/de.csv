@@ -4,14 +4,12 @@ Email address,E-Mail-Adresse
 First name,Vorname
 Last name,Nachname
 Password,Passwort
-New password,Neues Passwort
 Create user,Nutzer anlegen
 Active,Aktiv
 Deactivated,Deaktiviert
 Deactivate,Deaktivieren
 Activate,Aktivieren
 Require 2FA,2FA verlangen
-Set password,Passwort setzen
 Delete,Löschen
 Delete this user for good?,Diesen Benutzer endgültig löschen?
 You may not manage users.,Du darfst Benutzer nicht verwalten.
@@ -42,3 +40,7 @@ Status,Status
 Require two-factor authentication,Zwei-Faktor-Authentifizierung verlangen
 Delete user,Nutzer löschen
 Delete {0} for good?,{0} endgültig löschen?
+Send password reset link,Link zum Zurücksetzen des Passworts senden
+A link to choose a new password was sent to {0}.,Ein Link zum Festlegen eines neuen Passworts wurde an {0} gesendet.
+The user has no email address.,Der Nutzer hat keine E-Mail-Adresse.
+The email could not be sent. Check the email settings of Keycloak.,Die E-Mail konnte nicht gesendet werden. Prüfe die E-Mail-Einstellungen von Keycloak.

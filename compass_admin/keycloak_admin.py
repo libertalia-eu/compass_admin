@@ -11,6 +11,8 @@ from compass_sso import keycloak, store
 TIMEOUT_SECONDS = 5
 MANAGE_USERS = "manage-users"
 CONFIGURE_TOTP = "CONFIGURE_TOTP"
+UPDATE_PASSWORD = "UPDATE_PASSWORD"
+RESET_LINK_LIFESPAN_SECONDS = 24 * 60 * 60
 
 
 def _access_token() -> str:
@@ -121,14 +123,21 @@ def delete_user(user_id: str) -> None:
 	_request("DELETE", f"/users/{user_id}", access_token)
 
 
-def reset_password(user_id: str, password: str) -> None:
-	"""Sets a password that stays valid: the user does not have to change it."""
-	_request(
-		"PUT",
-		f"/users/{user_id}/reset-password",
-		_access_token(),
-		json={"type": "password", "value": password, "temporary": False},
-	)
+def send_password_reset(user_id: str) -> None:
+	"""Emails the user a link to set a new password. Keycloak's page asks for the password twice and changes it only when both match; the link works for 24 hours."""
+	access_token = _access_token()
+	if not _request("GET", f"/users/{user_id}", access_token).json().get("email"):
+		frappe.throw(_("The user has no email address."), frappe.ValidationError)
+	try:
+		_request(
+			"PUT",
+			f"/users/{user_id}/execute-actions-email",
+			access_token,
+			params={"lifespan": RESET_LINK_LIFESPAN_SECONDS},
+			json=[UPDATE_PASSWORD],
+		)
+	except requests.HTTPError:
+		frappe.throw(_("The email could not be sent. Check the email settings of Keycloak."), frappe.ValidationError)
 
 
 def require_2fa(user_id: str) -> None:

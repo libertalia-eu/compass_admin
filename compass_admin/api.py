@@ -44,9 +44,9 @@ def delete_user(user_id: str) -> None:
 
 
 @frappe.whitelist(methods=["POST"])
-def reset_user_password(user_id: str, password: str) -> None:
-	"""Gives a user a new password that stays valid; the old one stops working."""
-	keycloak_admin.reset_password(_checked(validation.user_id, user_id), _checked(validation.password, password))
+def send_password_reset(user_id: str) -> None:
+	"""Emails the user a link (valid for 24 hours) to choose a new password; the admin never sees it."""
+	keycloak_admin.send_password_reset(_checked(validation.user_id, user_id))
 
 
 @frappe.whitelist(methods=["POST"])

@@ -5,6 +5,7 @@
   </PageHeader>
   <div class="flex flex-col gap-4 p-6">
     <ErrorMessage :message="error" />
+    <p v-if="notice" class="text-p-base text-ink-gray-8">{{ notice }}</p>
     <table class="w-full text-left text-p-base">
       <thead class="text-ink-gray-6">
         <tr>
@@ -21,7 +22,7 @@
           <td><Badge :label="user.enabled ? __('Active') : __('Deactivated')" :theme="user.enabled ? 'green' : 'gray'" /></td>
           <td class="flex justify-end gap-1 py-1">
             <Button variant="ghost" :label="user.enabled ? __('Deactivate') : __('Activate')" @click="run('set_user_enabled', { user_id: user.id, enabled: user.enabled ? 0 : 1 })" />
-            <Button variant="ghost" :label="__('Set password')" @click="settingPassword = user" />
+            <Button variant="ghost" :label="__('Send password reset link')" :disabled="!user.email" @click="sendReset(user)" />
             <Button variant="ghost" :label="__('Require two-factor authentication')" @click="run('require_user_2fa', { user_id: user.id })" />
             <Button variant="ghost" theme="red" :label="__('Delete')" @click="deleting = user" />
           </td>
@@ -44,15 +45,6 @@
     </template>
   </Dialog>
 
-  <Dialog v-model:open="passwordOpen" :title="__('Set password')">
-    <template #default>
-      <form class="flex flex-col gap-3" @submit.prevent="setPassword">
-        <FormControl v-model="newPassword" :label="__('New password')" type="password" autocomplete="new-password" required />
-        <Button type="submit" variant="solid" :label="__('Set password')" />
-      </form>
-    </template>
-  </Dialog>
-
   <Dialog v-model:open="deleteOpen" :title="__('Delete user')">
     <template #default>
       <p class="text-p-base">{{ __('Delete {0} for good?').replace('{0}', deleting?.username) }}</p>
@@ -63,24 +55,24 @@
 
 <script setup>
 import { computed, reactive, ref } from 'vue'
+import { __ } from '@/translate'
 import { Badge, Button, Dialog, ErrorMessage, FormControl, PageHeader, PageHeaderTitle, call } from 'frappe-ui'
 
 const users = ref([])
 const error = ref('')
+const notice = ref('')
 const creating = ref(false)
-const settingPassword = ref(null)
 const deleting = ref(null)
-const newPassword = ref('')
 const blank = () => ({ username: '', email: '', first_name: '', last_name: '', password: '', locale: window.locale || 'en' })
 const form = reactive(blank())
 const languages = [{ label: 'English', value: 'en' }, { label: 'Deutsch', value: 'de' }]
 
-// the dialogs open while a user is picked
-const passwordOpen = computed({ get: () => !!settingPassword.value, set: (v) => !v && (settingPassword.value = null) })
+// the dialog opens while a user is picked
 const deleteOpen = computed({ get: () => !!deleting.value, set: (v) => !v && (deleting.value = null) })
 
 async function api(method, args) {
   error.value = ''
+  notice.value = ''
   try {
     return await call(`compass_admin.api.${method}`, args)
   } catch (e) {
@@ -107,12 +99,9 @@ async function create() {
   }
 }
 
-async function setPassword() {
-  await run('reset_user_password', { user_id: settingPassword.value.id, password: newPassword.value })
-  if (!error.value) {
-    settingPassword.value = null
-    newPassword.value = ''
-  }
+async function sendReset(user) {
+  await api('send_password_reset', { user_id: user.id })
+  if (!error.value) notice.value = __('A link to choose a new password was sent to {0}.').replace('{0}', user.email)
 }
 
 async function remove() {
