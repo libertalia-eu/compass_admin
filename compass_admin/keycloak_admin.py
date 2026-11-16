@@ -11,6 +11,8 @@ from compass_sso import keycloak, store
 TIMEOUT_SECONDS = 5
 MANAGE_USERS = "manage-users"
 CONFIGURE_TOTP = "CONFIGURE_TOTP"
+UPDATE_PASSWORD = "UPDATE_PASSWORD"
+RESET_LINK_LIFESPAN_SECONDS = 24 * 60 * 60
 
 
 def _access_token() -> str:
@@ -72,12 +74,54 @@ def _refuse_own_account(user_id: str, access_token: str) -> None:
 def list_users() -> list[dict]:
 	users = _request("GET", "/users?briefRepresentation=true&max=500", _access_token()).json()
 	return sorted(
-		({key: user.get(key) for key in ("id", "username", "email", "enabled")} for user in users),
+		(
+			{"id": user["id"], "username": user["username"], "email": user.get("email"), "first_name": user.get("firstName"), "last_name": user.get("lastName"), "enabled": user.get("enabled")}
+			for user in users
+		),
 		key=lambda user: user["username"],
 	)
 
 
-def create_user(username: str, email: str, first_name: str, last_name: str, password: str) -> None:
+def get_user(user_id: str) -> dict:
+	user = _request("GET", f"/users/{user_id}", _access_token()).json()
+	return {
+		"id": user["id"],
+		"username": user["username"],
+		"email": user.get("email"),
+		"first_name": user.get("firstName"),
+		"last_name": user.get("lastName"),
+		"enabled": user.get("enabled"),
+		"locale": (user.get("attributes", {}).get("locale") or [None])[0],
+		"require_2fa": CONFIGURE_TOTP in user.get("requiredActions", []),
+	}
+
+
+def update_user(user_id: str, email: str, first_name: str, last_name: str, locale: str, require_2fa: bool) -> None:
+	"""Changes the data of a user and whether they must set up a second factor at the next sign-in. The whole representation goes back, so attributes and other required actions stay as they are."""
+	access_token = _access_token()
+	user = _request("GET", f"/users/{user_id}", access_token).json()
+	user.update({"email": email, "firstName": first_name, "lastName": last_name})
+	user.setdefault("attributes", {})["locale"] = [locale]
+	actions = [a for a in user.get("requiredActions", []) if a != CONFIGURE_TOTP]
+	user["requiredActions"] = [*actions, CONFIGURE_TOTP] if require_2fa else actions
+	_request("PUT", f"/users/{user_id}", access_token, json=user)
+
+
+def has_totp() -> bool:
+	"""Whether the signed-in person has set up a second factor, from the account API of Keycloak (the token of a user with the default roles of the realm may call it). Any failure reads as no second factor: the link to remove it stays hidden."""
+	try:
+		response = requests.get(
+			keycloak.realm_url() + "/account/credentials",
+			headers={"Authorization": f"Bearer {_access_token()}", "Accept": "application/json"},
+			timeout=TIMEOUT_SECONDS,
+		)
+		response.raise_for_status()
+		return any(c["type"] == "otp" and c.get("userCredentialMetadatas") for c in response.json())
+	except (requests.RequestException, ValueError, KeyError):
+		return False
+
+
+def create_user(username: str, email: str, first_name: str, last_name: str, password: str, locale: str) -> None:
 	_request(
 		"POST",
 		"/users",
@@ -88,6 +132,7 @@ def create_user(username: str, email: str, first_name: str, last_name: str, pass
 			"firstName": first_name,
 			"lastName": last_name,
 			"enabled": True,
+			"attributes": {"locale": [locale]},
 			"credentials": [{"type": "password", "value": password, "temporary": False}],
 		},
 	)
@@ -106,14 +151,21 @@ def delete_user(user_id: str) -> None:
 	_request("DELETE", f"/users/{user_id}", access_token)
 
 
-def reset_password(user_id: str, password: str) -> None:
-	"""Sets a password that stays valid: the user does not have to change it."""
-	_request(
-		"PUT",
-		f"/users/{user_id}/reset-password",
-		_access_token(),
-		json={"type": "password", "value": password, "temporary": False},
-	)
+def send_password_reset(user_id: str) -> None:
+	"""Emails the user a link to set a new password. Keycloak's page asks for the password twice and changes it only when both match; the link works for 24 hours."""
+	access_token = _access_token()
+	if not _request("GET", f"/users/{user_id}", access_token).json().get("email"):
+		frappe.throw(_("The user has no email address."), frappe.ValidationError)
+	try:
+		_request(
+			"PUT",
+			f"/users/{user_id}/execute-actions-email",
+			access_token,
+			params={"lifespan": RESET_LINK_LIFESPAN_SECONDS},
+			json=[UPDATE_PASSWORD],
+		)
+	except requests.HTTPError:
+		frappe.throw(_("The email could not be sent. Check the email settings of Keycloak."), frappe.ValidationError)
 
 
 def require_2fa(user_id: str) -> None:

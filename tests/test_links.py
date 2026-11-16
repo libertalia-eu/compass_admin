@@ -21,9 +21,9 @@ class WithActionTest(unittest.TestCase):
 
 class AccountLinksTest(unittest.TestCase):
 	def setUp(self):
-		self.links = {link["key"]: link for link in account_links(AUTHORIZE, REALM + "/")}
+		self.links = {link["key"]: link for link in account_links(AUTHORIZE, REALM + "/", has_totp=True)}
 
-	def test_every_user_gets_the_four_links(self):
+	def test_a_user_with_a_second_factor_gets_the_four_links(self):
 		self.assertEqual(set(self.links), {"password", "totp-set-up", "totp-remove", "profile"})
 
 	def test_password_and_totp_use_application_initiated_actions(self):
@@ -37,3 +37,7 @@ class AccountLinksTest(unittest.TestCase):
 	def test_no_link_targets_the_account_rest_api(self):
 		for link in self.links.values():
 			self.assertNotIn("/account/credentials", link["url"])
+
+	def test_a_user_without_a_second_factor_cannot_remove_it(self):
+		links = {link["key"] for link in account_links(AUTHORIZE, REALM, has_totp=False)}
+		self.assertEqual(links, {"password", "totp-set-up", "profile"})

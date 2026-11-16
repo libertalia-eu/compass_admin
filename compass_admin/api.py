@@ -13,14 +13,40 @@ def _checked(check, value):
 
 
 @frappe.whitelist(methods=["POST"])
-def create_user(username: str, email: str, first_name: str, last_name: str, password: str) -> None:
-	"""Creates an enabled user with a password that stays valid (the user does not have to change it)."""
+def list_users() -> list[dict]:
+	"""The users of the realm; Keycloak refuses anyone without the right to manage users."""
+	return keycloak_admin.list_users()
+
+
+@frappe.whitelist(methods=["POST"])
+def get_user(user_id: str) -> dict:
+	"""The data of one user for the edit view."""
+	return keycloak_admin.get_user(_checked(validation.user_id, user_id))
+
+
+@frappe.whitelist(methods=["POST"])
+def update_user(user_id: str, email: str, first_name: str, last_name: str, locale: str, require_2fa: int) -> None:
+	"""Changes email, names and language of a user and whether they must set up 2FA at the next sign-in; the user name stays."""
+	keycloak_admin.update_user(
+		_checked(validation.user_id, user_id),
+		_checked(validation.email, email),
+		_checked(validation.name, first_name),
+		_checked(validation.name, last_name),
+		_checked(validation.locale, locale),
+		bool(frappe.utils.cint(require_2fa)),
+	)
+
+
+@frappe.whitelist(methods=["POST"])
+def create_user(username: str, email: str, first_name: str, last_name: str, password: str, locale: str) -> None:
+	"""Creates an enabled user with a password that stays valid (the user does not have to change it) and the language they see."""
 	keycloak_admin.create_user(
 		_checked(validation.username, username),
 		_checked(validation.email, email),
 		_checked(validation.name, first_name),
 		_checked(validation.name, last_name),
 		_checked(validation.password, password),
+		_checked(validation.locale, locale),
 	)
 
 
@@ -37,9 +63,9 @@ def delete_user(user_id: str) -> None:
 
 
 @frappe.whitelist(methods=["POST"])
-def reset_user_password(user_id: str, password: str) -> None:
-	"""Gives a user a new password that stays valid; the old one stops working."""
-	keycloak_admin.reset_password(_checked(validation.user_id, user_id), _checked(validation.password, password))
+def send_password_reset(user_id: str) -> None:
+	"""Emails the user a link (valid for 24 hours) to choose a new password; the admin never sees it."""
+	keycloak_admin.send_password_reset(_checked(validation.user_id, user_id))
 
 
 @frappe.whitelist(methods=["POST"])

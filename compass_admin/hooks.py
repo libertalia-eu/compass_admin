@@ -5,7 +5,9 @@ app_description = "Admin interface of COMPASS on top of Keycloak"
 app_license = "AGPL-3.0-or-later"
 required_apps = ["compass_sso"]
 
-# The entry of the overview and the apps menus; the page itself shows only what the level of the user may change.
+# One tile on the overview and in the apps menus; the menu inside the app shows "User management" only to a Company Admin.
 add_to_apps_screen = [
-	{"name": "compass_admin", "logo": "/assets/frappe/images/framework.png", "title": "Account", "route": "/admin"}
+	{"name": "compass_admin", "logo": "/assets/frappe/images/framework.png", "title": "Admin", "route": "/admin"},
 ]
+
+website_route_rules = [{"from_route": "/admin/<path:app_path>", "to_route": "admin"}]

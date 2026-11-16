@@ -1,6 +1,59 @@
-Account,Konto
-Sign in to manage your account,Melde dich an, um dein Konto zu verwalten
+Users,Benutzer
+User name,Benutzername
+Email address,E-Mail-Adresse
+First name,Vorname
+Last name,Nachname
+Password,Passwort
+Create user,Nutzer anlegen
+Active,Aktiv
+Deactivated,Deaktiviert
+Deactivate,Deaktivieren
+Activate,Aktivieren
+Require 2FA,2FA verlangen
+Delete,Löschen
+Delete this user for good?,Diesen Benutzer endgültig löschen?
+You may not manage users.,Du darfst Benutzer nicht verwalten.
+You cannot do this to your own account.,Das geht beim eigenen Konto nicht.
+A user with this name or email address exists already.,Ein Benutzer mit diesem Namen oder dieser E-Mail-Adresse gibt es schon.
+Keycloak refused the request.,Keycloak hat die Anfrage abgelehnt.
+Keycloak is not reachable.,Keycloak ist nicht erreichbar.
+The Keycloak session has ended. Sign in again.,Die Keycloak-Sitzung ist beendet. Melde dich neu an.
+"The user name has 3 to 64 lower case letters, digits, dots, underscores or hyphens.","Der Benutzername hat 3 bis 64 Kleinbuchstaben, Ziffern, Punkte, Unterstriche oder Bindestriche."
+The email address is not valid.,Die E-Mail-Adresse ist ungültig.
+The user id is not valid.,Die Benutzer-ID ist ungültig.
+A first and a last name have 1 to 64 characters.,Vor- und Nachname haben 1 bis 64 Zeichen.
+The password has 1 to 128 characters.,Das Passwort hat 1 bis 128 Zeichen.
+My account,Mein Konto
+User management,Benutzerverwaltung
 Change password,Passwort ändern
 Set up two-factor authentication,Zwei-Faktor-Authentifizierung einrichten
 Remove two-factor authentication,Zwei-Faktor-Authentifizierung entfernen
-Edit profile,Profil bearbeiten
+Edit profile and language,Profil und Sprache bearbeiten
+Language,Sprache
+The language is not available.,Die Sprache ist nicht verfügbar.
+Sign in to manage your account,"Melde dich an, um dein Konto zu verwalten"
+Admin,Admin
+New user,Neuer Nutzer
+Username,Benutzername
+Email,E-Mail
+Status,Status
+Require two-factor authentication,Zwei-Faktor-Authentifizierung verlangen
+Delete user,Nutzer löschen
+Delete {0} for good?,{0} endgültig löschen?
+Send password reset link,Link zum Zurücksetzen des Passworts senden
+A link to choose a new password was sent to {0}.,Ein Link zum Festlegen eines neuen Passworts wurde an {0} gesendet.
+The user has no email address.,Der Nutzer hat keine E-Mail-Adresse.
+The email could not be sent. Check the email settings of Keycloak.,Die E-Mail konnte nicht gesendet werden. Prüfe die E-Mail-Einstellungen von Keycloak.
+Actions,Aktionen
+Edit,Bearbeiten
+Back,Zurück
+Save,Speichern
+Saved.,Gespeichert.
+Reset password,Passwort zurücksetzen
+Name,Name
+Open,Öffnen
+Collapse,Zuklappen
+Expand,Aufklappen
+User created.,Nutzer angelegt.
+No users yet,Noch keine Nutzer
+Add one to get started.,Lege den ersten an.

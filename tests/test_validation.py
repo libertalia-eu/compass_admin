@@ -49,3 +49,14 @@ class UserIdTest(unittest.TestCase):
 		for value in ("", "../users", "22011c1e-af56-487e-8074-221293b8095f/credentials", "22011C1E-AF56-487E-8074-221293B8095F", None):
 			with self.assertRaises(ValueError, msg=repr(value)):
 				validation.user_id(value)
+
+
+class LocaleTest(unittest.TestCase):
+	def test_accepts_the_languages_of_the_realm(self):
+		self.assertEqual(validation.locale("de"), "de")
+		self.assertEqual(validation.locale("en"), "en")
+
+	def test_refuses_everything_else(self):
+		for value in ("", "fr", "DE", None):
+			with self.assertRaises(ValueError, msg=repr(value)):
+				validation.locale(value)

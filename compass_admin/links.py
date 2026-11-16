@@ -10,12 +10,14 @@ def with_action(authorize_url: str, action: str) -> str:
 	return f"{authorize_url}{'&' if '?' in authorize_url else '?'}{urlencode({'kc_action': action})}"
 
 
-def account_links(authorize_url: str, realm_url: str) -> list[dict]:
-	"""The three links of every signed-in user. Removing a second factor and editing the profile happen on the pages of the Keycloak account console, because removing needs the id of the credential (`delete_credential:<id>`), which only the account REST API lists."""
+def account_links(authorize_url: str, realm_url: str, has_totp: bool) -> list[dict]:
+	"""The links of every signed-in user; removing a second factor only for one who has set it up. Removing a second factor and editing the profile happen on the pages of the Keycloak account console, because removing needs the id of the credential (`delete_credential:<id>`), which only the account REST API lists."""
 	console = f"{realm_url.rstrip('/')}/account/#"
-	return [
+	links = [
 		{"key": "password", "label": "Change password", "url": with_action(authorize_url, UPDATE_PASSWORD), "returns": True},
 		{"key": "totp-set-up", "label": "Set up two-factor authentication", "url": with_action(authorize_url, CONFIGURE_TOTP), "returns": True},
-		{"key": "totp-remove", "label": "Remove two-factor authentication", "url": f"{console}/security/signingin", "returns": False},
-		{"key": "profile", "label": "Edit profile", "url": f"{console}/personal-info", "returns": False},
+		{"key": "profile", "label": "Edit profile and language", "url": f"{console}/personal-info", "returns": False},
 	]
+	if has_totp:
+		links.insert(2, {"key": "totp-remove", "label": "Remove two-factor authentication", "url": f"{console}/security/signingin", "returns": False})
+	return links

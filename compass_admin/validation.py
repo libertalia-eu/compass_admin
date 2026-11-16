@@ -6,6 +6,7 @@ EMAIL = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
 USER_ID = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
 MAXIMUM_PASSWORD_LENGTH = 128
 MAXIMUM_NAME_LENGTH = 64
+LOCALES = ("de", "en")  # the languages of the realm and of compass_sso
 
 
 def username(value: str) -> str:
@@ -38,4 +39,10 @@ def user_id(value: str) -> str:
 	"""The id Keycloak gives a user (a UUID); it goes into a URL, so nothing else may pass."""
 	if not isinstance(value, str) or not USER_ID.fullmatch(value):
 		raise ValueError("The user id is not valid.")
+	return value
+
+
+def locale(value: str) -> str:
+	if value not in LOCALES:
+		raise ValueError("The language is not available.")
 	return value
