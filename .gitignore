@@ -4,3 +4,5 @@ __pycache__/
 node_modules/
 compass_admin/public/frontend/
 compass_admin/www/admin.html
+frontend/dist/
+frontend/*.d.ts
