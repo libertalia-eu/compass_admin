@@ -1,14 +1,14 @@
-{% extends "templates/web.html" %}
+{% extends "compass_admin/templates/admin_layout.html" %}
 
-{% block page_content %}
-<div class="compass-admin">
-	<h1>{{ title }}</h1>
-	<ul class="compass-admin-links">
-		{% for link in links %}
-		<li><a href="{{ link.url }}" data-link="{{ link.key }}">{{ link.label }}</a></li>
-		{% endfor %}
-	</ul>
-</div>
+{% block admin_content %}
+<ul class="compass-admin-links">
+	{% for link in links %}
+	<li><a href="{{ link.url }}" data-link="{{ link.key }}">{{ link.label }}</a></li>
+	{% endfor %}
+</ul>
+{% endblock %}
+
+{% block admin_style %}
 <style>
 	.compass-admin-links { list-style: none; padding: 0; margin-top: 24px; display: flex; flex-direction: column; gap: 12px; }
 </style>

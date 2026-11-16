@@ -1,8 +1,6 @@
-{% extends "templates/web.html" %}
+{% extends "compass_admin/templates/admin_layout.html" %}
 
-{% block page_content %}
-<div class="compass-admin" data-csrf="{{ csrf_token }}">
-	<h1>{{ title }}</h1>
+{% block admin_content %}
 	<p id="users-message" role="status"></p>
 	<form id="create-user" class="compass-admin-form">
 		<input name="username" placeholder="{{ _('User name') }}" required autocomplete="off">
@@ -10,6 +8,10 @@
 		<input name="first_name" placeholder="{{ _('First name') }}" required autocomplete="off">
 		<input name="last_name" placeholder="{{ _('Last name') }}" required autocomplete="off">
 		<input name="password" type="password" placeholder="{{ _('Password') }}" required autocomplete="new-password">
+		<select name="locale" aria-label="{{ _('Language') }}">
+			<option value="en" selected>English</option>
+			<option value="de">Deutsch</option>
+		</select>
 		<button type="submit">{{ _("Create user") }}</button>
 	</form>
 	<table class="compass-admin-users">
@@ -28,13 +30,18 @@
 		</tr>
 		{% endfor %}
 	</table>
-</div>
+{% endblock %}
+
+{% block admin_style %}
 <style>
 	.compass-admin-form { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0; }
 	.compass-admin-users { width: 100%; border-collapse: collapse; }
 	.compass-admin-actions { display: flex; flex-wrap: wrap; gap: 4px; }
 	.compass-admin-users td { padding: 8px; border-bottom: 1px solid var(--border-color, #ddd); }
 </style>
+{% endblock %}
+
+{% block admin_script %}
 <script>
 	(function () {
 		var root = document.querySelector(".compass-admin");

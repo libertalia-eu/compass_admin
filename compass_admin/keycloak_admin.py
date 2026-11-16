@@ -77,7 +77,21 @@ def list_users() -> list[dict]:
 	)
 
 
-def create_user(username: str, email: str, first_name: str, last_name: str, password: str) -> None:
+def has_totp() -> bool:
+	"""Whether the signed-in person has set up a second factor, from the account API of Keycloak (the token of a user with the default roles of the realm may call it). Any failure reads as no second factor: the link to remove it stays hidden."""
+	try:
+		response = requests.get(
+			keycloak.realm_url() + "/account/credentials",
+			headers={"Authorization": f"Bearer {_access_token()}", "Accept": "application/json"},
+			timeout=TIMEOUT_SECONDS,
+		)
+		response.raise_for_status()
+		return any(c["type"] == "otp" and c.get("userCredentialMetadatas") for c in response.json())
+	except (requests.RequestException, ValueError, KeyError):
+		return False
+
+
+def create_user(username: str, email: str, first_name: str, last_name: str, password: str, locale: str) -> None:
 	_request(
 		"POST",
 		"/users",
@@ -88,6 +102,7 @@ def create_user(username: str, email: str, first_name: str, last_name: str, pass
 			"firstName": first_name,
 			"lastName": last_name,
 			"enabled": True,
+			"attributes": {"locale": [locale]},
 			"credentials": [{"type": "password", "value": password, "temporary": False}],
 		},
 	)

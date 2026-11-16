@@ -14,7 +14,6 @@ Require 2FA,2FA verlangen
 Set password,Passwort setzen
 Delete,Löschen
 Delete this user for good?,Diesen Benutzer endgültig löschen?
-Manage users,Benutzer verwalten
 You may not manage users.,Du darfst Benutzer nicht verwalten.
 You cannot do this to your own account.,Das geht beim eigenen Konto nicht.
 A user with this name or email address exists already.,Ein Benutzer mit diesem Namen oder dieser E-Mail-Adresse gibt es schon.
@@ -26,3 +25,12 @@ The email address is not valid.,Die E-Mail-Adresse ist ungültig.
 The user id is not valid.,Die Benutzer-ID ist ungültig.
 A first and a last name have 1 to 64 characters.,Vor- und Nachname haben 1 bis 64 Zeichen.
 The password has 1 to 128 characters.,Das Passwort hat 1 bis 128 Zeichen.
+My account,Mein Konto
+User management,Benutzerverwaltung
+Change password,Passwort ändern
+Set up two-factor authentication,Zwei-Faktor-Authentifizierung einrichten
+Remove two-factor authentication,Zwei-Faktor-Authentifizierung entfernen
+Edit profile and language,Profil und Sprache bearbeiten
+Language,Sprache
+The language is not available.,Die Sprache ist nicht verfügbar.
+Sign in to manage your account,"Melde dich an, um dein Konto zu verwalten"

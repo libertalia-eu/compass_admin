@@ -1,0 +1,28 @@
+{% extends "templates/web.html" %}
+
+{% block page_content %}
+<div class="compass-admin" data-csrf="{{ csrf_token }}">
+	<nav class="compass-admin-menu">
+		<div class="compass-admin-app">{{ app_title }}</div>
+		{% for item in menu %}
+		<a href="{{ item.url }}"{% if item.active %} class="active"{% endif %}>{{ item.label }}</a>
+		{% endfor %}
+	</nav>
+	<main class="compass-admin-content">
+		<h1>{{ title }}</h1>
+		{% block admin_content %}{% endblock %}
+	</main>
+</div>
+<style>
+	/* The look of the Frappe apps: a menu on the left, the content on the right. */
+	.compass-admin { display: flex; gap: 24px; min-height: 70vh; }
+	.compass-admin-menu { flex: 0 0 220px; display: flex; flex-direction: column; gap: 4px; padding: 12px; background: var(--subtle-fg, #f8f8f8); border-radius: 8px; align-self: flex-start; }
+	.compass-admin-app { font-weight: 600; padding: 8px; }
+	.compass-admin-menu a { padding: 8px; border-radius: 6px; color: var(--text-color, #333); text-decoration: none; }
+	.compass-admin-menu a.active { background: var(--fg-color, #fff); box-shadow: 0 1px 2px rgba(0, 0, 0, .1); }
+	.compass-admin-content { flex: 1; min-width: 0; }
+	@media (max-width: 640px) { .compass-admin { flex-direction: column; } .compass-admin-menu { flex-basis: auto; align-self: stretch; } }
+</style>
+{% block admin_style %}{% endblock %}
+{% block admin_script %}{% endblock %}
+{% endblock %}
