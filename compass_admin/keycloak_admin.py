@@ -92,15 +92,18 @@ def get_user(user_id: str) -> dict:
 		"last_name": user.get("lastName"),
 		"enabled": user.get("enabled"),
 		"locale": (user.get("attributes", {}).get("locale") or [None])[0],
+		"require_2fa": CONFIGURE_TOTP in user.get("requiredActions", []),
 	}
 
 
-def update_user(user_id: str, email: str, first_name: str, last_name: str, locale: str) -> None:
-	"""Changes the data of a user. The whole representation goes back, so attributes and required actions stay as they are."""
+def update_user(user_id: str, email: str, first_name: str, last_name: str, locale: str, require_2fa: bool) -> None:
+	"""Changes the data of a user and whether they must set up a second factor at the next sign-in. The whole representation goes back, so attributes and other required actions stay as they are."""
 	access_token = _access_token()
 	user = _request("GET", f"/users/{user_id}", access_token).json()
 	user.update({"email": email, "firstName": first_name, "lastName": last_name})
 	user.setdefault("attributes", {})["locale"] = [locale]
+	actions = [a for a in user.get("requiredActions", []) if a != CONFIGURE_TOTP]
+	user["requiredActions"] = [*actions, CONFIGURE_TOTP] if require_2fa else actions
 	_request("PUT", f"/users/{user_id}", access_token, json=user)
 
 

@@ -8,15 +8,15 @@
     <p v-if="notice" class="text-p-base text-ink-gray-8">{{ notice }}</p>
     <form class="flex flex-col gap-3" @submit.prevent="save">
       <FormControl :model-value="user.username" :label="__('Username')" disabled />
-      <FormControl v-model="form.email" :label="__('Email')" type="email" required />
       <FormControl v-model="form.first_name" :label="__('First name')" required />
       <FormControl v-model="form.last_name" :label="__('Last name')" required />
+      <FormControl v-model="form.email" :label="__('Email')" type="email" required />
       <FormControl v-model="form.locale" :label="__('Language')" type="select" :options="languages" />
+      <FormControl v-model="form.require_2fa" :label="__('Require two-factor authentication')" type="checkbox" />
       <Button type="submit" variant="solid" :label="__('Save')" />
     </form>
     <div class="flex flex-wrap gap-2 border-t border-outline-gray-1 pt-4">
       <Button variant="outline" :label="__('Reset password')" :disabled="!user.email" @click="resetPassword" />
-      <Button variant="outline" :label="__('Require two-factor authentication')" @click="require2fa" />
       <Button variant="outline" :label="user.enabled ? __('Deactivate') : __('Activate')" @click="toggle" />
       <Button variant="outline" theme="red" :label="__('Delete')" @click="deleting = true" />
     </div>
@@ -41,7 +41,7 @@ const props = defineProps({ id: String })
 const router = useRouter()
 const { api, error } = useApi()
 const user = ref(null)
-const form = reactive({ email: '', first_name: '', last_name: '', locale: 'en' })
+const form = reactive({ email: '', first_name: '', last_name: '', locale: 'en', require_2fa: false })
 const notice = ref('')
 const deleting = ref(false)
 
@@ -60,9 +60,8 @@ async function run(method, args, message) {
   return true
 }
 
-const save = () => run('update_user', { ...form }, __('Saved.'))
+const save = () => run('update_user', { ...form, require_2fa: form.require_2fa ? 1 : 0 }, __('Saved.'))
 const resetPassword = () => run('send_password_reset', {}, __('A link to choose a new password was sent to {0}.').replace('{0}', user.value.email))
-const require2fa = () => run('require_user_2fa', {}, __('The user must set up two-factor authentication at the next sign-in.'))
 const toggle = () => run('set_user_enabled', { enabled: user.value.enabled ? 0 : 1 }, __('Saved.'))
 
 async function remove() {

@@ -25,14 +25,15 @@ def get_user(user_id: str) -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-def update_user(user_id: str, email: str, first_name: str, last_name: str, locale: str) -> None:
-	"""Changes email, names and language of a user; the user name stays."""
+def update_user(user_id: str, email: str, first_name: str, last_name: str, locale: str, require_2fa: int) -> None:
+	"""Changes email, names and language of a user and whether they must set up 2FA at the next sign-in; the user name stays."""
 	keycloak_admin.update_user(
 		_checked(validation.user_id, user_id),
 		_checked(validation.email, email),
 		_checked(validation.name, first_name),
 		_checked(validation.name, last_name),
 		_checked(validation.locale, locale),
+		bool(frappe.utils.cint(require_2fa)),
 	)
 
 
