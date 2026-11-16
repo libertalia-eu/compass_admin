@@ -1,22 +1,26 @@
 <template>
-  <DesktopShell>
-    <template #sidebar>
-      <Sidebar>
-        <SidebarHeader :title="__('Admin')" subtitle="COMPASS" />
-        <SidebarItem :label="__('My account')" :route="{ name: 'MyAccount' }">
-          <template #prefix><LucideUser class="size-4" /></template>
-        </SidebarItem>
-        <SidebarItem v-if="canManage" :label="__('User management')" :route="{ name: 'Users' }" :active="$route.path.startsWith('/users')">
-          <template #prefix><LucideUsers class="size-4" /></template>
-        </SidebarItem>
-      </Sidebar>
-    </template>
-    <RouterView />
-  </DesktopShell>
+  <FrappeUIProvider>
+    <DesktopShell class="!h-screen">
+      <template #sidebar>
+        <Sidebar v-model:collapsed="collapsed" class="border-r border-outline-gray-1">
+          <SidebarHeader :title="__('Admin')" :subtitle="account.fullname" logo="/assets/frappe/images/framework.png" />
+          <div class="flex flex-1 flex-col gap-1 overflow-y-auto px-2 pt-1">
+            <SidebarItem :label="__('My account')" icon="lucide-user" :route="{ name: 'MyAccount' }" />
+            <SidebarItem v-if="canManage" :label="__('User management')" icon="lucide-users" :route="{ name: 'Users' }" :active="$route.path.startsWith('/users')" />
+          </div>
+          <div class="px-2 pb-2"><SidebarCollapseToggle /></div>
+        </Sidebar>
+      </template>
+      <RouterView />
+    </DesktopShell>
+  </FrappeUIProvider>
 </template>
 
 <script setup>
-import { DesktopShell, Sidebar, SidebarHeader, SidebarItem } from 'frappe-ui'
+import { ref } from 'vue'
+import { DesktopShell, FrappeUIProvider, Sidebar, SidebarCollapseToggle, SidebarHeader, SidebarItem } from 'frappe-ui'
 
 const canManage = window.can_manage_users
+const account = window.account
+const collapsed = ref(window.innerWidth < 640)
 </script>
