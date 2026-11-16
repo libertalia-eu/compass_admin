@@ -74,9 +74,34 @@ def _refuse_own_account(user_id: str, access_token: str) -> None:
 def list_users() -> list[dict]:
 	users = _request("GET", "/users?briefRepresentation=true&max=500", _access_token()).json()
 	return sorted(
-		({key: user.get(key) for key in ("id", "username", "email", "enabled")} for user in users),
+		(
+			{"id": user["id"], "username": user["username"], "email": user.get("email"), "first_name": user.get("firstName"), "last_name": user.get("lastName"), "enabled": user.get("enabled")}
+			for user in users
+		),
 		key=lambda user: user["username"],
 	)
+
+
+def get_user(user_id: str) -> dict:
+	user = _request("GET", f"/users/{user_id}", _access_token()).json()
+	return {
+		"id": user["id"],
+		"username": user["username"],
+		"email": user.get("email"),
+		"first_name": user.get("firstName"),
+		"last_name": user.get("lastName"),
+		"enabled": user.get("enabled"),
+		"locale": (user.get("attributes", {}).get("locale") or [None])[0],
+	}
+
+
+def update_user(user_id: str, email: str, first_name: str, last_name: str, locale: str) -> None:
+	"""Changes the data of a user. The whole representation goes back, so attributes and required actions stay as they are."""
+	access_token = _access_token()
+	user = _request("GET", f"/users/{user_id}", access_token).json()
+	user.update({"email": email, "firstName": first_name, "lastName": last_name})
+	user.setdefault("attributes", {})["locale"] = [locale]
+	_request("PUT", f"/users/{user_id}", access_token, json=user)
 
 
 def has_totp() -> bool:

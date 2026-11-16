@@ -19,6 +19,24 @@ def list_users() -> list[dict]:
 
 
 @frappe.whitelist(methods=["POST"])
+def get_user(user_id: str) -> dict:
+	"""The data of one user for the edit view."""
+	return keycloak_admin.get_user(_checked(validation.user_id, user_id))
+
+
+@frappe.whitelist(methods=["POST"])
+def update_user(user_id: str, email: str, first_name: str, last_name: str, locale: str) -> None:
+	"""Changes email, names and language of a user; the user name stays."""
+	keycloak_admin.update_user(
+		_checked(validation.user_id, user_id),
+		_checked(validation.email, email),
+		_checked(validation.name, first_name),
+		_checked(validation.name, last_name),
+		_checked(validation.locale, locale),
+	)
+
+
+@frappe.whitelist(methods=["POST"])
 def create_user(username: str, email: str, first_name: str, last_name: str, password: str, locale: str) -> None:
 	"""Creates an enabled user with a password that stays valid (the user does not have to change it) and the language they see."""
 	keycloak_admin.create_user(

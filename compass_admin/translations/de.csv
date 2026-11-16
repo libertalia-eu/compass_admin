@@ -44,3 +44,10 @@ Send password reset link,Link zum Zurücksetzen des Passworts senden
 A link to choose a new password was sent to {0}.,Ein Link zum Festlegen eines neuen Passworts wurde an {0} gesendet.
 The user has no email address.,Der Nutzer hat keine E-Mail-Adresse.
 The email could not be sent. Check the email settings of Keycloak.,Die E-Mail konnte nicht gesendet werden. Prüfe die E-Mail-Einstellungen von Keycloak.
+Actions,Aktionen
+Edit,Bearbeiten
+Back,Zurück
+Save,Speichern
+Saved.,Gespeichert.
+Reset password,Passwort zurücksetzen
+The user must set up two-factor authentication at the next sign-in.,Der Nutzer muss bei der nächsten Anmeldung die Zwei-Faktor-Authentifizierung einrichten.
