@@ -1,0 +1,58 @@
+{% extends "templates/web.html" %}
+
+{% block page_content %}
+<div class="compass-admin" data-csrf="{{ csrf_token }}">
+	<h1>{{ title }}</h1>
+	<p id="users-message" role="status"></p>
+	<form id="create-user" class="compass-admin-form">
+		<input name="username" placeholder="{{ _('User name') }}" required autocomplete="off">
+		<input name="email" type="email" placeholder="{{ _('Email address') }}" required autocomplete="off">
+		<input name="first_name" placeholder="{{ _('First name') }}" required autocomplete="off">
+		<input name="last_name" placeholder="{{ _('Last name') }}" required autocomplete="off">
+		<input name="password" type="password" placeholder="{{ _('Password') }}" required autocomplete="new-password">
+		<button type="submit">{{ _("Create user") }}</button>
+	</form>
+	<table class="compass-admin-users">
+		{% for user in users %}
+		<tr data-user="{{ user.username }}">
+			<td>{{ user.username }}</td>
+			<td>{{ user.email or "" }}</td>
+			<td>{{ _("Active") if user.enabled else _("Deactivated") }}</td>
+			<td><button data-toggle="{{ user.id }}" data-enabled="{{ 0 if user.enabled else 1 }}">{{ _("Deactivate") if user.enabled else _("Activate") }}</button></td>
+		</tr>
+		{% endfor %}
+	</table>
+</div>
+<style>
+	.compass-admin-form { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0; }
+	.compass-admin-users { width: 100%; border-collapse: collapse; }
+	.compass-admin-users td { padding: 8px; border-bottom: 1px solid var(--border-color, #ddd); }
+</style>
+<script>
+	(function () {
+		var root = document.querySelector(".compass-admin");
+		var message = document.getElementById("users-message");
+		function call(method, data) {
+			return fetch("/api/method/compass_admin.api." + method, {
+				method: "POST",
+				headers: { "X-Frappe-CSRF-Token": root.dataset.csrf, "Content-Type": "application/x-www-form-urlencoded" },
+				body: new URLSearchParams(data),
+			}).then(function (response) {
+				if (response.ok) { return location.reload(); }
+				return response.json().then(function (body) {
+					var text = body._server_messages ? JSON.parse(JSON.parse(body._server_messages)[0]).message : response.statusText;
+					message.textContent = text;
+				});
+			});
+		}
+		document.getElementById("create-user").addEventListener("submit", function (event) {
+			event.preventDefault();
+			call("create_user", new FormData(event.target));
+		});
+		root.addEventListener("click", function (event) {
+			var button = event.target.closest("[data-toggle]");
+			if (button) { call("set_user_enabled", { user_id: button.dataset.toggle, enabled: button.dataset.enabled }); }
+		});
+	})();
+</script>
+{% endblock %}
