@@ -28,3 +28,21 @@ def create_user(username: str, email: str, first_name: str, last_name: str, pass
 def set_user_enabled(user_id: str, enabled: int) -> None:
 	"""Deactivates (enabled 0) or activates (enabled 1) a user: a deactivated user cannot sign in."""
 	keycloak_admin.set_enabled(_checked(validation.user_id, user_id), bool(frappe.utils.cint(enabled)))
+
+
+@frappe.whitelist(methods=["POST"])
+def delete_user(user_id: str) -> None:
+	"""Deletes a user for good; not the own account."""
+	keycloak_admin.delete_user(_checked(validation.user_id, user_id))
+
+
+@frappe.whitelist(methods=["POST"])
+def reset_user_password(user_id: str, password: str) -> None:
+	"""Gives a user a new password that stays valid; the old one stops working."""
+	keycloak_admin.reset_password(_checked(validation.user_id, user_id), _checked(validation.password, password))
+
+
+@frappe.whitelist(methods=["POST"])
+def require_user_2fa(user_id: str) -> None:
+	"""Makes the user set up a second factor at the next sign-in."""
+	keycloak_admin.require_2fa(_checked(validation.user_id, user_id))
