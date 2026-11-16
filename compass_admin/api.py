@@ -13,6 +13,12 @@ def _checked(check, value):
 
 
 @frappe.whitelist(methods=["POST"])
+def list_users() -> list[dict]:
+	"""The users of the realm; Keycloak refuses anyone without the right to manage users."""
+	return keycloak_admin.list_users()
+
+
+@frappe.whitelist(methods=["POST"])
 def create_user(username: str, email: str, first_name: str, last_name: str, password: str, locale: str) -> None:
 	"""Creates an enabled user with a password that stays valid (the user does not have to change it) and the language they see."""
 	keycloak_admin.create_user(

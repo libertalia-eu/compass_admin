@@ -5,7 +5,7 @@ First name,Vorname
 Last name,Nachname
 Password,Passwort
 New password,Neues Passwort
-Create user,Benutzer anlegen
+Create user,Nutzer anlegen
 Active,Aktiv
 Deactivated,Deaktiviert
 Deactivate,Deaktivieren
@@ -34,3 +34,11 @@ Edit profile and language,Profil und Sprache bearbeiten
 Language,Sprache
 The language is not available.,Die Sprache ist nicht verfügbar.
 Sign in to manage your account,"Melde dich an, um dein Konto zu verwalten"
+Admin,Admin
+New user,Neuer Nutzer
+Username,Benutzername
+Email,E-Mail
+Status,Status
+Require two-factor authentication,Zwei-Faktor-Authentifizierung verlangen
+Delete user,Nutzer löschen
+Delete {0} for good?,{0} endgültig löschen?
