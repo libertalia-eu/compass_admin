@@ -47,7 +47,9 @@
 			}).then(function (response) {
 				if (response.ok) { return location.reload(); }
 				return response.json().then(function (body) {
-					var text = body._server_messages ? JSON.parse(JSON.parse(body._server_messages)[0]).message : response.statusText;
+					// Frappe puts the message of a failed call into _server_messages or, when it raised, into "exception" after the class name.
+					var text = body._server_messages ? JSON.parse(JSON.parse(body._server_messages)[0]).message
+						: (body.exception || "").replace(/^[\w.]+: /, "") || response.status;
 					message.textContent = text;
 				});
 			});
