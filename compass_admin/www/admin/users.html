@@ -18,7 +18,13 @@
 			<td>{{ user.username }}</td>
 			<td>{{ user.email or "" }}</td>
 			<td>{{ _("Active") if user.enabled else _("Deactivated") }}</td>
-			<td><button data-toggle="{{ user.id }}" data-enabled="{{ 0 if user.enabled else 1 }}">{{ _("Deactivate") if user.enabled else _("Activate") }}</button></td>
+			<td class="compass-admin-actions">
+				<button data-toggle="{{ user.id }}" data-enabled="{{ 0 if user.enabled else 1 }}">{{ _("Deactivate") if user.enabled else _("Activate") }}</button>
+				<button data-require-2fa="{{ user.id }}">{{ _("Require 2FA") }}</button>
+				<input type="password" data-password-of="{{ user.id }}" placeholder="{{ _('New password') }}" autocomplete="new-password">
+				<button data-reset="{{ user.id }}">{{ _("Set password") }}</button>
+				<button data-delete="{{ user.id }}">{{ _("Delete") }}</button>
+			</td>
 		</tr>
 		{% endfor %}
 	</table>
@@ -26,6 +32,7 @@
 <style>
 	.compass-admin-form { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0; }
 	.compass-admin-users { width: 100%; border-collapse: collapse; }
+	.compass-admin-actions { display: flex; flex-wrap: wrap; gap: 4px; }
 	.compass-admin-users td { padding: 8px; border-bottom: 1px solid var(--border-color, #ddd); }
 </style>
 <script>
@@ -51,7 +58,14 @@
 		});
 		root.addEventListener("click", function (event) {
 			var button = event.target.closest("[data-toggle]");
-			if (button) { call("set_user_enabled", { user_id: button.dataset.toggle, enabled: button.dataset.enabled }); }
+			if (button) { return call("set_user_enabled", { user_id: button.dataset.toggle, enabled: button.dataset.enabled }); }
+			var id;
+			if ((id = event.target.dataset.require2fa)) { return call("require_user_2fa", { user_id: id }); }
+			if ((id = event.target.dataset.reset)) {
+				var password = root.querySelector('[data-password-of="' + id + '"]').value;
+				return call("reset_user_password", { user_id: id, password: password });
+			}
+			if ((id = event.target.dataset.delete) && confirm("{{ _('Delete this user for good?') }}")) { call("delete_user", { user_id: id }); }
 		});
 	})();
 </script>

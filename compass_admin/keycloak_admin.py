@@ -10,6 +10,7 @@ from compass_sso import keycloak, store
 
 TIMEOUT_SECONDS = 5
 MANAGE_USERS = "manage-users"
+CONFIGURE_TOTP = "CONFIGURE_TOTP"
 
 
 def _access_token() -> str:
@@ -27,10 +28,8 @@ def _access_token() -> str:
 
 
 def _roles_of(access_token: str) -> list[str]:
-	"""The roles of the realm-management client; the token comes straight from Keycloak over TLS, so its payload needs no signature check."""
-	payload = access_token.split(".")[1]
-	claims = json.loads(base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4)))
-	return claims.get("resource_access", {}).get("realm-management", {}).get("roles", [])
+	"""The roles of the realm-management client."""
+	return _claims_of(access_token).get("resource_access", {}).get("realm-management", {}).get("roles", [])
 
 
 def _admin_url(path: str) -> str:
@@ -54,8 +53,20 @@ def _request(method: str, path: str, access_token: str, **kwargs) -> requests.Re
 	return response
 
 
+def _claims_of(access_token: str) -> dict:
+	"""The payload of a token that comes straight from Keycloak over TLS, so it needs no signature check."""
+	payload = access_token.split(".")[1]
+	return json.loads(base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4)))
+
+
 def can_manage_users() -> bool:
 	return MANAGE_USERS in _roles_of(_access_token())
+
+
+def _refuse_own_account(user_id: str, access_token: str) -> None:
+	"""An admin who deactivates or deletes the own account locks themselves out."""
+	if user_id == _claims_of(access_token)["sub"]:
+		frappe.throw(_("You cannot do this to your own account."), frappe.ValidationError)
 
 
 def list_users() -> list[dict]:
@@ -83,4 +94,31 @@ def create_user(username: str, email: str, first_name: str, last_name: str, pass
 
 
 def set_enabled(user_id: str, enabled: bool) -> None:
-	_request("PUT", f"/users/{user_id}", _access_token(), json={"enabled": enabled})
+	access_token = _access_token()
+	if not enabled:
+		_refuse_own_account(user_id, access_token)
+	_request("PUT", f"/users/{user_id}", access_token, json={"enabled": enabled})
+
+
+def delete_user(user_id: str) -> None:
+	access_token = _access_token()
+	_refuse_own_account(user_id, access_token)
+	_request("DELETE", f"/users/{user_id}", access_token)
+
+
+def reset_password(user_id: str, password: str) -> None:
+	"""Sets a password that stays valid: the user does not have to change it."""
+	_request(
+		"PUT",
+		f"/users/{user_id}/reset-password",
+		_access_token(),
+		json={"type": "password", "value": password, "temporary": False},
+	)
+
+
+def require_2fa(user_id: str) -> None:
+	"""Adds the required action that makes the user set up a second factor at the next sign-in; other required actions stay."""
+	access_token = _access_token()
+	actions = _request("GET", f"/users/{user_id}", access_token).json().get("requiredActions", [])
+	if CONFIGURE_TOTP not in actions:
+		_request("PUT", f"/users/{user_id}", access_token, json={"requiredActions": [*actions, CONFIGURE_TOTP]})
