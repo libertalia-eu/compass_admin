@@ -1,4 +1,4 @@
-"""The calls of the user management (COMPASS REQ-088) and of groups and roles (REQ-089), made by the page /admin/users."""
+"""The calls of the user management (COMPASS REQ-088) and of roles (REQ-089), made by the page /admin/users."""
 import frappe
 from frappe import _
 
@@ -86,7 +86,7 @@ def list_roles() -> list[dict]:
 
 @frappe.whitelist(methods=["POST"])
 def get_user_roles(user_id: str) -> dict:
-	"""The roles a user holds directly and the groups they belong to."""
+	"""The roles a user holds."""
 	return keycloak_admin.get_user_roles(_checked(validation.user_id, user_id))
 
 
@@ -95,56 +95,3 @@ def set_user_role(user_id: str, client: str, role: str, granted: int) -> None:
 	"""Gives a user a role (granted 1) or takes it away (0); Keycloak refuses roles the admin does not hold. Not Company Admin from oneself."""
 	name_of_client, name = _checked(lambda value: validation.role(*value), (client, role))
 	keycloak_admin.set_user_role(_checked(validation.user_id, user_id), name_of_client, name, _flag(granted))
-
-
-@frappe.whitelist(methods=["POST"])
-def list_groups() -> list[dict]:
-	"""The groups of the realm."""
-	return keycloak_admin.list_groups()
-
-
-@frappe.whitelist(methods=["POST"])
-def get_group(group_id: str) -> dict:
-	"""A group with its members and roles."""
-	return keycloak_admin.get_group(_checked(validation.group_id, group_id))
-
-
-@frappe.whitelist(methods=["POST"])
-def create_group(name: str) -> None:
-	"""Creates an empty group."""
-	keycloak_admin.create_group(_checked(validation.group_name, name))
-
-
-@frappe.whitelist(methods=["POST"])
-def rename_group(group_id: str, name: str) -> None:
-	"""Renames a group."""
-	keycloak_admin.rename_group(_checked(validation.group_id, group_id), _checked(validation.group_name, name))
-
-
-@frappe.whitelist(methods=["POST"])
-def delete_group(group_id: str) -> None:
-	"""Deletes a group; its members stay, but lose what the group gave them."""
-	keycloak_admin.delete_group(_checked(validation.group_id, group_id))
-
-
-@frappe.whitelist(methods=["POST"])
-def set_group_member(group_id: str, user_id: str, member: int) -> None:
-	"""Adds a user to a group (member 1) or removes them (0)."""
-	keycloak_admin.set_group_member(_checked(validation.group_id, group_id), _checked(validation.user_id, user_id), _flag(member))
-
-
-@frappe.whitelist(methods=["POST"])
-def set_group_role(group_id: str, client: str, role: str, granted: int) -> None:
-	"""Gives a group a role (granted 1) or takes it away (0); the members have it at their next sign-in."""
-	name_of_client, name = _checked(lambda value: validation.role(*value), (client, role))
-	keycloak_admin.set_group_role(_checked(validation.group_id, group_id), name_of_client, name, _flag(granted))
-
-
-@frappe.whitelist(methods=["POST"])
-def update_group(group_id: str, name: str, roles: str, members: str) -> None:
-	"""Saves the group page in one call: sets name, roles and members to the given state (JSON lists). Keycloak has no transaction, so a failure
-	may leave a part done; the call compares with the stored state, so saving again finishes it. Keycloak refuses roles the admin does not hold."""
-	group_id = _checked(validation.group_id, group_id)
-	name = _checked(validation.group_name, name)
-	wanted_roles, wanted_members = _checked(lambda value: validation.group_state(*value), (frappe.parse_json(roles), frappe.parse_json(members)))
-	keycloak_admin.update_group(group_id, name, wanted_roles, wanted_members)

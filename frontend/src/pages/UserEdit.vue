@@ -27,10 +27,6 @@
       <FormControl v-model="form.require_2fa" :label="__('Require two-factor authentication')" type="checkbox" />
     </form>
     <RoleChecklist :held="access.roles" @change="(role, value) => setRole(role, value)" />
-    <div v-if="access.groups.length" class="flex flex-col gap-1">
-      <h3 class="text-lg-semibold">{{ __('Groups') }}</h3>
-      <RouterLink v-for="g in access.groups" :key="g.id" :to="{ name: 'GroupEdit', params: { id: g.id } }" class="text-ink-gray-7 underline">{{ g.name }}</RouterLink>
-    </div>
     <div class="flex flex-wrap gap-2 border-t border-outline-gray-1 pt-4">
       <Button :label="__('Reset password')" icon-left="lucide-key-round" :disabled="!user.email" @click="resetPassword" />
       <Button :label="user.enabled ? __('Deactivate') : __('Activate')" :icon-left="user.enabled ? 'lucide-user-x' : 'lucide-user-check'" @click="toggle" />
@@ -64,7 +60,7 @@ const { api, error } = useApi()
 const user = ref(null)
 const form = reactive({ email: '', first_name: '', last_name: '', locale: 'en', require_2fa: false })
 const deleting = ref(false)
-const access = ref({ roles: [], groups: [] })
+const access = ref({ roles: [] })
 
 const fullName = computed(() => `${user.value.first_name} ${user.value.last_name}`.trim() || user.value.username)
 const breadcrumbs = computed(() => [
