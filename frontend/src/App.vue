@@ -7,6 +7,7 @@
           <div class="flex flex-1 flex-col gap-1 overflow-y-auto px-2 pt-1">
             <SidebarItem :label="__('My account')" icon="lucide-user" :route="{ name: 'MyAccount' }" />
             <SidebarItem v-if="canManage" :label="__('User management')" icon="lucide-users" :route="{ name: 'Users' }" :active="$route.path.startsWith('/users')" />
+            <SidebarItem v-if="canManage" :label="__('Group management')" icon="lucide-users-round" :route="{ name: 'Groups' }" :active="$route.path.startsWith('/groups')" />
           </div>
           <div class="px-2 pb-2"><SidebarCollapseToggle /></div>
         </Sidebar>

@@ -6,6 +6,14 @@ EMAIL = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
 USER_ID = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
 MAXIMUM_PASSWORD_LENGTH = 128
 MAXIMUM_NAME_LENGTH = 64
+# the Keycloak client and the roles of it that the page hands out (COMPASS REQ-089); `admin` of Nextcloud stays internal
+ROLES = {
+	"crm": ("CRM Nutzer", "CRM Admin"),
+	"helpdesk": ("Helpdesk Nutzer", "Helpdesk Admin"),
+	"raven": ("Raven Nutzer", "Raven Admin"),
+	"nextcloud": ("Nextcloud Nutzer", "Nextcloud Admin"),
+	"compass-admin": ("Company Admin",),
+}
 LOCALES = ("de", "en")  # the languages of the realm and of compass_sso
 
 
@@ -46,3 +54,23 @@ def locale(value: str) -> str:
 	if value not in LOCALES:
 		raise ValueError("The language is not available.")
 	return value
+
+
+def group_id(value: str) -> str:
+	"""The id Keycloak gives a group (a UUID); it goes into a URL, so nothing else may pass."""
+	if not isinstance(value, str) or not USER_ID.fullmatch(value):
+		raise ValueError("The group id is not valid.")
+	return value
+
+
+def group_name(value: str) -> str:
+	if not isinstance(value, str) or not value.strip() or len(value) > MAXIMUM_NAME_LENGTH:
+		raise ValueError(f"A group name has 1 to {MAXIMUM_NAME_LENGTH} characters.")
+	return value.strip()
+
+
+def role(client: str, name: str) -> tuple[str, str]:
+	"""Only the roles an admin hands out: the user and admin role of each app and the Company Admin."""
+	if name not in ROLES.get(client, ()):
+		raise ValueError("The role is not available.")
+	return client, name

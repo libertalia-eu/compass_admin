@@ -1,11 +1,13 @@
 """Calls to the Keycloak admin API with the token of the signed-in person (COMPASS REQ-088): Keycloak decides what the person may do."""
 import base64
 import json
+from urllib.parse import quote
 
 import frappe
 import requests
 from frappe import _
 
+from compass_admin.validation import ROLES
 from compass_sso import keycloak, store
 
 TIMEOUT_SECONDS = 5
@@ -174,3 +176,82 @@ def require_2fa(user_id: str) -> None:
 	actions = _request("GET", f"/users/{user_id}", access_token).json().get("requiredActions", [])
 	if CONFIGURE_TOTP not in actions:
 		_request("PUT", f"/users/{user_id}", access_token, json={"requiredActions": [*actions, CONFIGURE_TOTP]})
+
+
+def _client_uuid(client: str, access_token: str) -> str:
+	found = _request("GET", "/clients", access_token, params={"clientId": client}).json()
+	if not found:
+		frappe.throw(_("The role is not available."), frappe.ValidationError)
+	return found[0]["id"]
+
+
+def list_roles() -> list[dict]:
+	"""The roles an admin hands out, in the order of validation.ROLES."""
+	return [{"client": client, "role": name} for client, names in ROLES.items() for name in names]
+
+
+def _held_roles(owner: str, access_token: str) -> list[dict]:
+	"""The roles of a user or group itself ("owner" is `/users/<id>` or `/groups/<id>`); roles that come through a group are not in it."""
+	held = []
+	for client, names in ROLES.items():
+		mapped = _request("GET", f"{owner}/role-mappings/clients/{_client_uuid(client, access_token)}", access_token).json()
+		held += [{"client": client, "role": r["name"]} for r in mapped if r["name"] in names]
+	return held
+
+
+def _set_role(owner: str, client: str, name: str, granted: bool, access_token: str) -> None:
+	uuid = _client_uuid(client, access_token)
+	representation = _request("GET", f"/clients/{uuid}/roles/{quote(name, safe='')}", access_token).json()
+	_request("POST" if granted else "DELETE", f"{owner}/role-mappings/clients/{uuid}", access_token, json=[representation])
+
+
+def get_user_roles(user_id: str) -> dict:
+	access_token = _access_token()
+	groups = _request("GET", f"/users/{user_id}/groups", access_token).json()
+	return {"roles": _held_roles(f"/users/{user_id}", access_token), "groups": [{"id": g["id"], "name": g["name"]} for g in groups]}
+
+
+def set_user_role(user_id: str, client: str, name: str, granted: bool) -> None:
+	access_token = _access_token()
+	if not granted and (client, name) == ("compass-admin", "Company Admin"):
+		_refuse_own_account(user_id, access_token)
+	_set_role(f"/users/{user_id}", client, name, granted, access_token)
+
+
+def list_groups() -> list[dict]:
+	groups = _request("GET", "/groups?briefRepresentation=true&max=500", _access_token()).json()
+	return sorted(({"id": g["id"], "name": g["name"]} for g in groups), key=lambda g: g["name"].lower())
+
+
+def get_group(group_id: str) -> dict:
+	access_token = _access_token()
+	group = _request("GET", f"/groups/{group_id}", access_token).json()
+	members = _request("GET", f"/groups/{group_id}/members?briefRepresentation=true&max=500", access_token).json()
+	return {
+		"id": group["id"],
+		"name": group["name"],
+		"members": sorted(({"id": m["id"], "username": m["username"]} for m in members), key=lambda m: m["username"]),
+		"roles": _held_roles(f"/groups/{group_id}", access_token),
+	}
+
+
+def create_group(name: str) -> None:
+	_request("POST", "/groups", _access_token(), json={"name": name})
+
+
+def rename_group(group_id: str, name: str) -> None:
+	access_token = _access_token()
+	group = _request("GET", f"/groups/{group_id}", access_token).json()
+	_request("PUT", f"/groups/{group_id}", access_token, json={**group, "name": name})
+
+
+def delete_group(group_id: str) -> None:
+	_request("DELETE", f"/groups/{group_id}", _access_token())
+
+
+def set_group_member(group_id: str, user_id: str, member: bool) -> None:
+	_request("PUT" if member else "DELETE", f"/users/{user_id}/groups/{group_id}", _access_token())
+
+
+def set_group_role(group_id: str, client: str, name: str, granted: bool) -> None:
+	_set_role(f"/groups/{group_id}", client, name, granted, _access_token())
