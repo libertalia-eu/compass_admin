@@ -18,7 +18,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { h, markRaw, ref } from 'vue'
+import AppsIcon from '@/AppsIcon.vue'
 import { __ } from '@/translate'
 import { call, DesktopShell, FrappeUIProvider, Sidebar, SidebarCollapseToggle, SidebarHeader, SidebarItem } from 'frappe-ui'
 
@@ -26,11 +27,36 @@ const canManage = window.can_manage_users
 const account = window.account
 const apps = window.apps || []
 
-// the apps the user may open (the apps screen of Frappe), then Log out like the other Frappe UI apps
+// Same menu as the user dropdown of Frappe CRM: Apps (a submenu with the other apps the user may open), separator, Log out
 const menuItems = [
-  { group: __('Switch app'), options: apps.map((app) => ({ label: app.title, onClick: () => window.open(app.route, app.window) })) },
+  {
+    group: '',
+    hideLabel: true,
+    options: [
+      {
+        label: __('Apps'),
+        icon: markRaw(AppsIcon),
+        submenu: apps.map((app) => ({
+          label: app.title,
+          onClick: () => openApp(app),
+          slots: { prefix: () => h('img', { class: 'size-5 rounded-4', src: app.logo }) },
+        })),
+      },
+    ],
+  },
   { group: '', hideLabel: true, options: [{ label: __('Log out'), icon: 'lucide-log-out', onClick: logout }] },
 ]
+
+// copied from the user dropdown of CRM: the window name makes a second click reuse the window; `noopener` would ignore the name
+function openApp(app) {
+  const target = window.open('', app.window)
+  try {
+    target.opener = null
+  } catch (e) {
+    // a reused window of another host has the opener cut already
+  }
+  target.location.href = app.route
+}
 
 async function logout() {
   await call('logout') // REQ-005: ends the Keycloak session and the sessions of all apps
