@@ -22,7 +22,7 @@ def get_context(context):
 		csrf_token=frappe.sessions.get_csrf_token(),
 		can_manage_users=_may_manage_users(),
 		locale=user.language or "en",
-		apps=[{"title": app["title"], "route": app["route"], "window": window_name(app)} for app in frappe.apps.get_apps()],
+		apps=[{"title": app["title"], "logo": app["logo"], "route": app["route"], "window": window_name(app)} for app in frappe.apps.get_apps() if app["name"] != "compass_admin"],
 		account={"fullname": user.full_name, "email": user.email, "links": links},
 		translated_messages=get_messages_for_boot(),
 	)
