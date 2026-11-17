@@ -57,3 +57,25 @@ Expand,Aufklappen
 User created.,Nutzer angelegt.
 No users yet,Noch keine Nutzer
 Add one to get started.,Lege den ersten an.
+The group id is not valid.,Die Gruppen-ID ist nicht gültig.
+A group name has 1 to 64 characters.,Ein Gruppenname hat 1 bis 64 Zeichen.
+The role is not available.,Die Rolle ist nicht verfügbar.
+Group management,Gruppenverwaltung
+Groups,Gruppen
+New group,Neue Gruppe
+Group name,Gruppenname
+Create group,Gruppe anlegen
+Group created.,Gruppe angelegt.
+No groups yet,Noch keine Gruppen
+Delete group,Gruppe löschen
+Delete group {0} for good?,Gruppe {0} endgültig löschen?
+Members,Mitglieder
+Add member,Mitglied hinzufügen
+Remove,Entfernen
+No members yet,Noch keine Mitglieder
+Roles,Rollen
+Company Admin,Company Admin
+Unsaved changes,Ungespeicherte Änderungen
+Group,Gruppe
+Log out,Abmelden
+Switch app,App wechseln

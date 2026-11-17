@@ -60,3 +60,40 @@ class LocaleTest(unittest.TestCase):
 		for value in ("", "fr", "DE", None):
 			with self.assertRaises(ValueError, msg=repr(value)):
 				validation.locale(value)
+
+
+class GroupAndRoleTest(unittest.TestCase):
+	def test_group_name_is_trimmed_and_limited(self):
+		self.assertEqual(validation.group_name("  People Admins "), "People Admins")
+		for name in ("", "  ", "x" * 65, None):
+			with self.assertRaises(ValueError, msg=repr(name)):
+				validation.group_name(name)
+
+	def test_group_id_is_a_uuid(self):
+		uuid = "0b3c1e5a-0000-4000-8000-000000000001"
+		self.assertEqual(validation.group_id(uuid), uuid)
+		with self.assertRaises(ValueError):
+			validation.group_id("../users")
+
+	def test_only_the_roles_of_the_apps_and_company_admin(self):
+		self.assertEqual(validation.role("crm", "CRM Admin"), ("crm", "CRM Admin"))
+		self.assertEqual(validation.role("compass-admin", "Company Admin"), ("compass-admin", "Company Admin"))
+		for client, name in (("realm-management", "manage-clients"), ("nextcloud", "admin"), ("crm", "Raven Nutzer"), ("x", "y")):
+			with self.assertRaises(ValueError, msg=name):
+				validation.role(client, name)
+
+
+class GroupStateTest(unittest.TestCase):
+	USER = "11111111-2222-3333-4444-555555555555"
+
+	def test_roles_and_members_are_checked(self):
+		roles, members = validation.group_state([{"client": "crm", "role": "CRM Admin"}], [self.USER])
+		self.assertEqual((roles, members), ({("crm", "CRM Admin")}, {self.USER}))
+
+	def test_refuses_foreign_roles_and_ids(self):
+		for roles, members in (([{"client": "realm-management", "role": "manage-clients"}], []), ([], ["../x"]), ("x", []), ([], None)):
+			with self.assertRaises(ValueError, msg=repr((roles, members))):
+				validation.group_state(roles, members)
+
+	def test_difference_lists_what_to_add_and_remove(self):
+		self.assertEqual(validation.difference({"a", "b"}, {"b", "c"}), (["c"], ["a"]))
