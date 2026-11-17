@@ -7,7 +7,7 @@ import frappe
 import requests
 from frappe import _
 
-from compass_admin.validation import ROLES, difference
+from compass_admin.validation import ROLES
 from compass_sso import keycloak, store
 
 TIMEOUT_SECONDS = 5
@@ -191,7 +191,7 @@ def list_roles() -> list[dict]:
 
 
 def _held_roles(owner: str, access_token: str) -> list[dict]:
-	"""The roles of a user or group itself ("owner" is `/users/<id>` or `/groups/<id>`); roles that come through a group are not in it."""
+	"""The roles of a user itself ("owner" is `/users/<id>`)."""
 	held = []
 	for client, names in ROLES.items():
 		mapped = _request("GET", f"{owner}/role-mappings/clients/{_client_uuid(client, access_token)}", access_token).json()
@@ -206,9 +206,7 @@ def _set_role(owner: str, client: str, name: str, granted: bool, access_token: s
 
 
 def get_user_roles(user_id: str) -> dict:
-	access_token = _access_token()
-	groups = _request("GET", f"/users/{user_id}/groups", access_token).json()
-	return {"roles": _held_roles(f"/users/{user_id}", access_token), "groups": [{"id": g["id"], "name": g["name"]} for g in groups]}
+	return {"roles": _held_roles(f"/users/{user_id}", _access_token())}
 
 
 def set_user_role(user_id: str, client: str, name: str, granted: bool) -> None:
@@ -216,57 +214,3 @@ def set_user_role(user_id: str, client: str, name: str, granted: bool) -> None:
 	if not granted and (client, name) == ("compass-admin", "Company Admin"):
 		_refuse_own_account(user_id, access_token)
 	_set_role(f"/users/{user_id}", client, name, granted, access_token)
-
-
-def list_groups() -> list[dict]:
-	groups = _request("GET", "/groups?briefRepresentation=true&max=500", _access_token()).json()
-	return sorted(({"id": g["id"], "name": g["name"]} for g in groups), key=lambda g: g["name"].lower())
-
-
-def get_group(group_id: str) -> dict:
-	access_token = _access_token()
-	group = _request("GET", f"/groups/{group_id}", access_token).json()
-	members = _request("GET", f"/groups/{group_id}/members?briefRepresentation=true&max=500", access_token).json()
-	return {
-		"id": group["id"],
-		"name": group["name"],
-		"members": sorted(({"id": m["id"], "username": m["username"]} for m in members), key=lambda m: m["username"]),
-		"roles": _held_roles(f"/groups/{group_id}", access_token),
-	}
-
-
-def create_group(name: str) -> None:
-	_request("POST", "/groups", _access_token(), json={"name": name})
-
-
-def rename_group(group_id: str, name: str) -> None:
-	access_token = _access_token()
-	group = _request("GET", f"/groups/{group_id}", access_token).json()
-	_request("PUT", f"/groups/{group_id}", access_token, json={**group, "name": name})
-
-
-def delete_group(group_id: str) -> None:
-	_request("DELETE", f"/groups/{group_id}", _access_token())
-
-
-def set_group_member(group_id: str, user_id: str, member: bool) -> None:
-	_request("PUT" if member else "DELETE", f"/users/{user_id}/groups/{group_id}", _access_token())
-
-
-def set_group_role(group_id: str, client: str, name: str, granted: bool) -> None:
-	_set_role(f"/groups/{group_id}", client, name, granted, _access_token())
-
-
-def update_group(group_id: str, name: str, roles: set, members: set) -> None:
-	"""Makes the group have exactly this name, these roles and these members; only what differs is called."""
-	access_token = _access_token()
-	group = get_group(group_id)
-	if group["name"] != name:
-		rename_group(group_id, name)
-	held = {(r["client"], r["role"]) for r in group["roles"]}
-	for granted, changed in zip((True, False), difference(held, roles)):
-		for client, role in changed:
-			_set_role(f"/groups/{group_id}", client, role, granted, access_token)
-	for member, changed in zip((True, False), difference({m["id"] for m in group["members"]}, members)):
-		for user_id in changed:
-			set_group_member(group_id, user_id, member)

@@ -3,8 +3,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 const routes = [
   { path: '/', name: 'MyAccount', component: () => import('@/pages/MyAccount.vue') },
   { path: '/users', name: 'Users', component: () => import('@/pages/Users.vue') },
-  { path: '/groups', name: 'Groups', component: () => import('@/pages/Groups.vue') },
-  { path: '/groups/:id', name: 'GroupEdit', component: () => import('@/pages/GroupEdit.vue'), props: true },
   { path: '/users/:id', name: 'UserEdit', component: () => import('@/pages/UserEdit.vue'), props: true },
 ]
 

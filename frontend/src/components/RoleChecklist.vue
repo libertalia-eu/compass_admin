@@ -18,7 +18,7 @@ import { FormControl } from 'frappe-ui'
 import { __ } from '@/translate'
 import { useApi } from '@/api'
 
-// the roles an admin hands out; `held` lists the ones the user or group has, a change goes to the parent
+// the roles an admin hands out; `held` lists the ones the user has, a change goes to the parent
 const props = defineProps({ held: { type: Array, default: () => [] } })
 defineEmits(['change'])
 
