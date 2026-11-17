@@ -19,6 +19,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { __ } from '@/translate'
 import { call, DesktopShell, FrappeUIProvider, Sidebar, SidebarCollapseToggle, SidebarHeader, SidebarItem } from 'frappe-ui'
 
 const canManage = window.can_manage_users
