@@ -11,7 +11,8 @@ from compass_admin.validation import ROLES
 from compass_sso import keycloak, store
 
 TIMEOUT_SECONDS = 5
-MANAGE_USERS = "manage-users"
+# The Company Admin has no manage-users (it would allow groups, COMPASS REQ-089): view-users is what only that role brings.
+MANAGE_USERS = "view-users"
 CONFIGURE_TOTP = "CONFIGURE_TOTP"
 UPDATE_PASSWORD = "UPDATE_PASSWORD"
 RESET_LINK_LIFESPAN_SECONDS = 24 * 60 * 60
