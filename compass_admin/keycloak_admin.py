@@ -7,7 +7,7 @@ import frappe
 import requests
 from frappe import _
 
-from compass_admin.validation import ROLES
+from compass_admin.validation import ROLES, difference
 from compass_sso import keycloak, store
 
 TIMEOUT_SECONDS = 5
@@ -255,3 +255,18 @@ def set_group_member(group_id: str, user_id: str, member: bool) -> None:
 
 def set_group_role(group_id: str, client: str, name: str, granted: bool) -> None:
 	_set_role(f"/groups/{group_id}", client, name, granted, _access_token())
+
+
+def update_group(group_id: str, name: str, roles: set, members: set) -> None:
+	"""Makes the group have exactly this name, these roles and these members; only what differs is called."""
+	access_token = _access_token()
+	group = get_group(group_id)
+	if group["name"] != name:
+		rename_group(group_id, name)
+	held = {(r["client"], r["role"]) for r in group["roles"]}
+	for granted, changed in zip((True, False), difference(held, roles)):
+		for client, role in changed:
+			_set_role(f"/groups/{group_id}", client, role, granted, access_token)
+	for member, changed in zip((True, False), difference({m["id"] for m in group["members"]}, members)):
+		for user_id in changed:
+			set_group_member(group_id, user_id, member)

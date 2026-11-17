@@ -74,3 +74,17 @@ def role(client: str, name: str) -> tuple[str, str]:
 	if name not in ROLES.get(client, ()):
 		raise ValueError("The role is not available.")
 	return client, name
+
+
+def group_state(roles, members) -> tuple[set[tuple[str, str]], set[str]]:
+	"""The roles (a list of {client, role}) and member ids a group is to have after saving the group page."""
+	if not isinstance(roles, list) or not isinstance(members, list):
+		raise ValueError("The roles and members are not valid.")
+	if not all(isinstance(r, dict) for r in roles):
+		raise ValueError("The roles and members are not valid.")
+	return {role(r.get("client"), r.get("role")) for r in roles}, {user_id(m) for m in members}
+
+
+def difference(held: set, wanted: set) -> tuple[list, list]:
+	"""What to add and what to remove to turn `held` into `wanted`, in a stable order."""
+	return sorted(wanted - held), sorted(held - wanted)

@@ -81,3 +81,19 @@ class GroupAndRoleTest(unittest.TestCase):
 		for client, name in (("realm-management", "manage-clients"), ("nextcloud", "admin"), ("crm", "Raven Nutzer"), ("x", "y")):
 			with self.assertRaises(ValueError, msg=name):
 				validation.role(client, name)
+
+
+class GroupStateTest(unittest.TestCase):
+	USER = "11111111-2222-3333-4444-555555555555"
+
+	def test_roles_and_members_are_checked(self):
+		roles, members = validation.group_state([{"client": "crm", "role": "CRM Admin"}], [self.USER])
+		self.assertEqual((roles, members), ({("crm", "CRM Admin")}, {self.USER}))
+
+	def test_refuses_foreign_roles_and_ids(self):
+		for roles, members in (([{"client": "realm-management", "role": "manage-clients"}], []), ([], ["../x"]), ("x", []), ([], None)):
+			with self.assertRaises(ValueError, msg=repr((roles, members))):
+				validation.group_state(roles, members)
+
+	def test_difference_lists_what_to_add_and_remove(self):
+		self.assertEqual(validation.difference({"a", "b"}, {"b", "c"}), (["c"], ["a"]))

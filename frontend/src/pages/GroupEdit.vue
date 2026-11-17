@@ -1,7 +1,10 @@
 <template>
   <PageHeader>
     <Breadcrumbs :items="breadcrumbs" />
-    <Button type="submit" form="group-form" variant="solid" :label="__('Rename')" :disabled="!group" />
+    <div class="flex items-center gap-2">
+      <Badge v-if="changed" :label="__('Unsaved changes')" theme="orange" variant="subtle" />
+      <Button type="submit" form="group-form" variant="solid" :label="__('Save')" :disabled="!changed" />
+    </div>
   </PageHeader>
   <div v-if="!group" class="flex flex-1 items-center justify-center">
     <ErrorMessage v-if="error" :message="error" />
@@ -9,18 +12,18 @@
   </div>
   <div v-else class="mx-auto flex w-full max-w-xl flex-col gap-6 p-6 text-ink-gray-8">
     <ErrorMessage :message="error" />
-    <form id="group-form" class="flex flex-col gap-4" @submit.prevent="rename">
+    <form id="group-form" class="flex flex-col gap-4" @submit.prevent="save">
       <FormControl v-model="name" :label="__('Group name')" required />
     </form>
 
-    <RoleChecklist :held="group.roles" @change="(role, value) => run('set_group_role', { client: role.client, role: role.role, granted: value ? 1 : 0 })" />
+    <RoleChecklist :held="roles" @change="setRole" />
 
     <div class="flex flex-col gap-2">
       <h3 class="text-lg-semibold">{{ __('Members') }}</h3>
-      <p v-if="!group.members.length" class="text-p-base text-ink-gray-6">{{ __('No members yet') }}</p>
-      <div v-for="member in group.members" :key="member.id" :data-member="member.username" class="flex items-center justify-between gap-2">
+      <p v-if="!members.length" class="text-p-base text-ink-gray-6">{{ __('No members yet') }}</p>
+      <div v-for="member in members" :key="member.id" :data-member="member.username" class="flex items-center justify-between gap-2">
         <span>{{ member.username }}</span>
-        <Button :label="__('Remove')" size="sm" @click="run('set_group_member', { user_id: member.id, member: 0 })" />
+        <Button :label="__('Remove')" size="sm" @click="members = members.filter((m) => m.id !== member.id)" />
       </div>
       <form class="flex items-end gap-2 pt-2" @submit.prevent="addMember">
         <FormControl v-model="newMember" class="flex-1" type="select" :label="__('Add member')" :options="candidates" />
@@ -48,7 +51,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Breadcrumbs, Button, Dialog, ErrorMessage, FormControl, LoadingIndicator, PageHeader, toast } from 'frappe-ui'
+import { Badge, Breadcrumbs, Button, Dialog, ErrorMessage, FormControl, LoadingIndicator, PageHeader, toast } from 'frappe-ui'
 import { __ } from '@/translate'
 import { useApi } from '@/api'
 import RoleChecklist from '@/components/RoleChecklist.vue'
@@ -59,31 +62,53 @@ const { api, error } = useApi()
 const group = ref(null)
 const users = ref([])
 const name = ref('')
+const roles = ref([])
+const members = ref([])
 const newMember = ref('')
 const deleting = ref(false)
 
 const breadcrumbs = computed(() => [{ label: __('Group management'), route: { name: 'Groups' } }, { label: group.value?.name || __('Edit') }])
 const candidates = computed(() => [
   { label: '', value: '' },
-  ...users.value.filter((u) => !group.value.members.some((m) => m.id === u.id)).map((u) => ({ label: u.username, value: u.id })),
+  ...users.value.filter((u) => !members.value.some((m) => m.id === u.id)).map((u) => ({ label: u.username, value: u.id })),
 ])
+
+const ids = (list) => list.map((m) => m.id).sort()
+const key = (r) => `${r.client}/${r.role}`
+// nothing is stored before Save: name, roles and members are edited here and compared with the stored group
+const changed = computed(
+  () =>
+    !!group.value &&
+    (name.value !== group.value.name ||
+      ids(members.value).join() !== ids(group.value.members).join() ||
+      roles.value.map(key).sort().join() !== group.value.roles.map(key).sort().join()),
+)
 
 async function load() {
   group.value = await api('get_group', { group_id: props.id })
-  if (group.value) name.value = group.value.name
+  if (!group.value) return
+  name.value = group.value.name
+  roles.value = [...group.value.roles]
+  members.value = [...group.value.members]
 }
 
-// runs a call on this group, shows its message and reloads the data
-async function run(method, args, message = __('Saved.')) {
-  await api(method, { group_id: props.id, ...args })
-  if (!error.value) toast.success(message)
-  await load()
+function setRole(role, granted) {
+  const others = roles.value.filter((r) => key(r) !== key(role))
+  roles.value = granted ? [...others, { client: role.client, role: role.role }] : others
 }
 
-const rename = () => run('rename_group', { name: name.value })
-const addMember = async () => {
-  await run('set_group_member', { user_id: newMember.value, member: 1 })
+function addMember() {
+  const user = users.value.find((u) => u.id === newMember.value)
+  if (user) members.value = [...members.value, { id: user.id, username: user.username }]
   newMember.value = ''
+}
+
+// one call stores all edits; on an error they stay in the page
+async function save() {
+  await api('update_group', { group_id: props.id, name: name.value, roles: JSON.stringify(roles.value), members: JSON.stringify(ids(members.value)) })
+  if (error.value) return
+  toast.success(__('Saved.'))
+  await load()
 }
 
 async function remove() {

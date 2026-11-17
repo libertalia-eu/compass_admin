@@ -138,3 +138,13 @@ def set_group_role(group_id: str, client: str, role: str, granted: int) -> None:
 	"""Gives a group a role (granted 1) or takes it away (0); the members have it at their next sign-in."""
 	name_of_client, name = _checked(lambda value: validation.role(*value), (client, role))
 	keycloak_admin.set_group_role(_checked(validation.group_id, group_id), name_of_client, name, _flag(granted))
+
+
+@frappe.whitelist(methods=["POST"])
+def update_group(group_id: str, name: str, roles: str, members: str) -> None:
+	"""Saves the group page in one call: sets name, roles and members to the given state (JSON lists). Keycloak has no transaction, so a failure
+	may leave a part done; the call compares with the stored state, so saving again finishes it. Keycloak refuses roles the admin does not hold."""
+	group_id = _checked(validation.group_id, group_id)
+	name = _checked(validation.group_name, name)
+	wanted_roles, wanted_members = _checked(lambda value: validation.group_state(*value), (frappe.parse_json(roles), frappe.parse_json(members)))
+	keycloak_admin.update_group(group_id, name, wanted_roles, wanted_members)
