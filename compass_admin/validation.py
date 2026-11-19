@@ -6,13 +6,13 @@ EMAIL = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
 USER_ID = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
 MAXIMUM_PASSWORD_LENGTH = 128
 MAXIMUM_NAME_LENGTH = 64
-# the Keycloak client and the roles of it that the page hands out (COMPASS REQ-089); `admin` of Nextcloud stays internal
+# the Keycloak client and the roles of it that the page hands out (COMPASS REQ-089); `admin` of Nextcloud stays internal.
+# Not Company Admin: it carries realm-management roles, which Keycloak 26.8.2 lets only a realm admin hand out (CVE-2026-96448).
 ROLES = {
 	"crm": ("CRM Nutzer", "CRM Admin"),
 	"helpdesk": ("Helpdesk Nutzer", "Helpdesk Admin"),
 	"raven": ("Raven Nutzer", "Raven Admin"),
 	"nextcloud": ("Nextcloud Nutzer", "Nextcloud Admin"),
-	"compass-admin": ("Company Admin",),
 }
 LOCALES = ("de", "en")  # the languages of the realm and of compass_sso
 
@@ -57,7 +57,7 @@ def locale(value: str) -> str:
 
 
 def role(client: str, name: str) -> tuple[str, str]:
-	"""Only the roles an admin hands out: the user and admin role of each app and the Company Admin."""
+	"""Only the roles an admin hands out: the user and admin role of each app."""
 	if name not in ROLES.get(client, ()):
 		raise ValueError("The role is not available.")
 	return client, name

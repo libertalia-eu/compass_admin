@@ -211,7 +211,4 @@ def get_user_roles(user_id: str) -> dict:
 
 
 def set_user_role(user_id: str, client: str, name: str, granted: bool) -> None:
-	access_token = _access_token()
-	if not granted and (client, name) == ("compass-admin", "Company Admin"):
-		_refuse_own_account(user_id, access_token)
-	_set_role(f"/users/{user_id}", client, name, granted, access_token)
+	_set_role(f"/users/{user_id}", client, name, granted, _access_token())

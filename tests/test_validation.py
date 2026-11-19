@@ -63,9 +63,8 @@ class LocaleTest(unittest.TestCase):
 
 
 class RoleTest(unittest.TestCase):
-	def test_only_the_roles_of_the_apps_and_company_admin(self):
+	def test_only_the_roles_of_the_apps(self):
 		self.assertEqual(validation.role("crm", "CRM Admin"), ("crm", "CRM Admin"))
-		self.assertEqual(validation.role("compass-admin", "Company Admin"), ("compass-admin", "Company Admin"))
-		for client, name in (("realm-management", "manage-clients"), ("nextcloud", "admin"), ("crm", "Raven Nutzer"), ("x", "y")):
+		for client, name in (("compass-admin", "Company Admin"), ("realm-management", "manage-clients"), ("nextcloud", "admin"), ("crm", "Raven Nutzer"), ("x", "y")):
 			with self.assertRaises(ValueError, msg=name):
 				validation.role(client, name)

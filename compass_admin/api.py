@@ -80,7 +80,7 @@ def _flag(value: int) -> bool:
 
 @frappe.whitelist(methods=["POST"])
 def list_roles() -> list[dict]:
-	"""The roles an admin hands out: user and admin of each app, and Company Admin."""
+	"""The roles an admin hands out: user and admin of each app."""
 	return keycloak_admin.list_roles()
 
 
@@ -92,6 +92,6 @@ def get_user_roles(user_id: str) -> dict:
 
 @frappe.whitelist(methods=["POST"])
 def set_user_role(user_id: str, client: str, role: str, granted: int) -> None:
-	"""Gives a user a role (granted 1) or takes it away (0); Keycloak refuses roles the admin does not hold. Not Company Admin from oneself."""
+	"""Gives a user a role (granted 1) or takes it away (0); Keycloak refuses roles the admin does not hold."""
 	name_of_client, name = _checked(lambda value: validation.role(*value), (client, role))
 	keycloak_admin.set_user_role(_checked(validation.user_id, user_id), name_of_client, name, _flag(granted))
